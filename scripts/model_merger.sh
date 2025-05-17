@@ -1,0 +1,1 @@
+python model_merger.py merge --backend fsdp --local_dir /vepfs/fs_ckps/guojianz/llm/verl_exp/verl_grpo_example_gsm8k_reimplement/qwen2_7b_function_rm/global_step_1740/actor --target_dir /vepfs/fs_ckps/guojianz/llm/verl_exp/verl_grpo_example_gsm8k_reimplement/qwen2_7b_function_rm/merged_hf_model --hf_model_path /vepfs/fs_projects/FunMG/LLM/model_weight/qwen/Qwen2.5-7B-Instruct

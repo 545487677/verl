@@ -123,3 +123,7 @@ ENV/
 logs
 log
 outputs
+
+*logs
+*log
+*whl

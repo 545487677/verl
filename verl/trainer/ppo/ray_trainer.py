@@ -202,6 +202,7 @@ def compute_advantage(data: DataProto, adv_estimator, gamma=1.0, lam=1.0, num_re
         data.batch["returns"] = returns
     elif adv_estimator == AdvantageEstimator.GRPO:
         # TODO: test on more adv estimator type
+        
         grpo_calculation_mask = data.batch["response_mask"]
         if multi_turn:
             # If multi-turn, replace the mask with the relevant part of loss_mask
@@ -459,7 +460,7 @@ class RayPPOTrainer:
             from verl.utils.dataset.rl_dataset import collate_fn as default_collate_fn
 
             collate_fn = default_collate_fn
-
+        
         self.train_dataloader = StatefulDataLoader(
             dataset=self.train_dataset,
             batch_size=self.config.data.get("gen_batch_size", self.config.data.train_batch_size),
@@ -562,9 +563,16 @@ class RayPPOTrainer:
         sample_outputs = []
         sample_scores = []
 
-        for test_data in self.val_dataloader:
-            test_batch = DataProto.from_single_dict(test_data)
+        # for test_data in self.val_dataloader:
+        for i, test_data in enumerate(tqdm(self.val_dataloader, desc="Validating", total=len(self.val_dataloader))):
+            
+            # debug
+            # if i > 2:
+            #     print('debug break')
+            #     break
 
+            test_batch = DataProto.from_single_dict(test_data)
+            
             # repeat test batch
             test_batch = test_batch.repeat(repeat_times=self.config.actor_rollout_ref.rollout.val_kwargs.n, interleave=True)
 
@@ -577,7 +585,7 @@ class RayPPOTrainer:
             # TODO: Can we keep special tokens except for padding tokens?
             input_texts = [self.tokenizer.decode(ids, skip_special_tokens=True) for ids in input_ids]
             sample_inputs.extend(input_texts)
-
+            
             batch_keys_to_pop = ["input_ids", "attention_mask", "position_ids"]
             non_tensor_batch_keys_to_pop = ["raw_prompt_ids"]
             if "multi_modal_inputs" in test_batch.non_tensor_batch:
@@ -590,7 +598,7 @@ class RayPPOTrainer:
                 batch_keys=batch_keys_to_pop,
                 non_tensor_batch_keys=non_tensor_batch_keys_to_pop,
             )
-
+            
             test_gen_batch.meta_info = {
                 "eos_token_id": self.tokenizer.eos_token_id,
                 "pad_token_id": self.tokenizer.pad_token_id,
@@ -619,7 +627,7 @@ class RayPPOTrainer:
             sample_outputs.extend(output_texts)
 
             test_batch = test_batch.union(test_output_gen_batch)
-
+            
             # evaluate using reward_function
             result = self.val_reward_fn(test_batch, return_dict=True)
             reward_tensor = result["reward_tensor"]
@@ -650,14 +658,17 @@ class RayPPOTrainer:
             assert len(lst) == 0 or len(lst) == len(sample_scores), f"{key_info}: {len(lst)=}, {len(sample_scores)=}"
 
         data_sources = np.concatenate(data_source_lst, axis=0)
-
+        
         data_src2var2metric2val = process_validation_metrics(data_sources, sample_inputs, reward_extra_infos_dict)
         metric_dict = {}
         for data_source, var2metric2val in data_src2var2metric2val.items():
+            
             core_var = "acc" if "acc" in var2metric2val else "reward"
             for var_name, metric2val in var2metric2val.items():
+                
                 n_max = max([int(name.split("@")[-1].split("/")[0]) for name in metric2val.keys()])
                 for metric_name, metric_val in metric2val.items():
+                    
                     if (var_name == core_var) and any(metric_name.startswith(pfx) for pfx in ["mean", "maj", "best"]) and (f"@{n_max}" in metric_name):
                         metric_sec = "val-core"
                     else:
@@ -886,7 +897,7 @@ class RayPPOTrainer:
                 metrics = {}
                 timing_raw = {}
                 batch: DataProto = DataProto.from_single_dict(batch_dict)
-
+                
                 # pop those keys for generation
                 batch_keys_to_pop = ["input_ids", "attention_mask", "position_ids"]
                 non_tensor_batch_keys_to_pop = ["raw_prompt_ids"]
@@ -943,7 +954,7 @@ class RayPPOTrainer:
 
                     # compute global_valid tokens
                     batch.meta_info["global_token_num"] = torch.sum(batch.batch["attention_mask"], dim=-1).tolist()
-
+                    
                     with _timer("reward", timing_raw):
                         # compute reward model score
                         if self.use_rm:
@@ -954,7 +965,7 @@ class RayPPOTrainer:
                             future_reward = compute_reward_async.remote(batch, self.config, self.tokenizer)
                         else:
                             reward_tensor, reward_extra_infos_dict = compute_reward(batch, self.reward_fn)
-
+                    
                     # recompute old_log_probs
                     with _timer("old_log_prob", timing_raw):
                         old_log_prob = self.actor_rollout_wg.compute_log_prob(batch)
@@ -1000,7 +1011,7 @@ class RayPPOTrainer:
                         # compute advantages, executed on the driver process
 
                         norm_adv_by_std_in_grpo = self.config.algorithm.get("norm_adv_by_std_in_grpo", True)  # GRPO adv normalization factor
-
+                        
                         batch = compute_advantage(
                             batch,
                             adv_estimator=self.config.algorithm.adv_estimator,

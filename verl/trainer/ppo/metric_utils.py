@@ -362,6 +362,7 @@ def process_validation_metrics(data_sources: list[str], sample_inputs: list[str]
         >>> result = process_validation_metrics(data_sources, sample_inputs, infos_dict)
         >>> # result will contain statistics for each data source and variable
     """
+    
     # Group metrics by data source, prompt and variable
     data_src2prompt2var2vals = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for sample_idx, data_source in enumerate(data_sources):
@@ -369,7 +370,7 @@ def process_validation_metrics(data_sources: list[str], sample_inputs: list[str]
         var2vals = data_src2prompt2var2vals[data_source][prompt]
         for var_name, var_vals in infos_dict.items():
             var2vals[var_name].append(var_vals[sample_idx])
-
+    
     # Calculate metrics for each group
     data_src2prompt2var2metric = defaultdict(lambda: defaultdict(lambda: defaultdict(dict)))
     for data_source, prompt2var2vals in data_src2prompt2var2vals.items():
@@ -407,7 +408,7 @@ def process_validation_metrics(data_sources: list[str], sample_inputs: list[str]
                             metric[f"maj@{n}/mean"], metric[f"maj@{n}/std"] = maj_n_mean, maj_n_std
 
                 data_src2prompt2var2metric[data_source][prompt][var_name] = metric
-
+    
     # Aggregate metrics across prompts
     data_src2var2metric2prompt_vals = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
     for data_source, prompt2var2metric in data_src2prompt2var2metric.items():
@@ -415,11 +416,11 @@ def process_validation_metrics(data_sources: list[str], sample_inputs: list[str]
             for var_name, metric in var2metric.items():
                 for metric_name, metric_val in metric.items():
                     data_src2var2metric2prompt_vals[data_source][var_name][metric_name].append(metric_val)
-
+    
     data_src2var2metric2val = defaultdict(lambda: defaultdict(lambda: defaultdict(float)))
     for data_source, var2metric2prompt_vals in data_src2var2metric2prompt_vals.items():
         for var_name, metric2prompt_vals in var2metric2prompt_vals.items():
             for metric_name, prompt_vals in metric2prompt_vals.items():
                 data_src2var2metric2val[data_source][var_name][metric_name] = np.mean(prompt_vals)
-
+    
     return data_src2var2metric2val

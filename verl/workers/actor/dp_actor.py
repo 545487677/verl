@@ -397,7 +397,7 @@ class DataParallelPPOActor(BasePPOActor):
                         clip_ratio_c=clip_ratio_c,
                         loss_agg_mode=loss_agg_mode,
                     )
-
+                    
                     if entropy_coeff != 0:
                         entropy_loss = agg_loss(loss_mat=entropy, loss_mask=response_mask, loss_agg_mode=loss_agg_mode)
 

@@ -35,7 +35,6 @@ def get_custom_reward_fn(config):
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Reward function file '{file_path}' not found.")
-
     spec = importlib.util.spec_from_file_location("custom_module", file_path)
     module = importlib.util.module_from_spec(spec)
     try:
@@ -68,7 +67,7 @@ def run_ppo(config) -> None:
     if not ray.is_initialized():
         # this is for local ray cluster
         ray.init(
-            runtime_env={"env_vars": {"TOKENIZERS_PARALLELISM": "true", "NCCL_DEBUG": "WARN", "VLLM_LOGGING_LEVEL": "WARN"}},
+            runtime_env={"env_vars": {"TOKENIZERS_PARALLELISM": "true", "NCCL_DEBUG": "WARN", "VLLM_LOGGING_LEVEL": "WARN","RAY_DEBUG": "legacy"}},
             num_cpus=config.ray_init.num_cpus,
         )
 
@@ -88,7 +87,7 @@ class TaskRunner:
 
         pprint(OmegaConf.to_container(config, resolve=True))  # resolve=True will eval symbol values
         OmegaConf.resolve(config)
-
+        
         # download the checkpoint from hdfs
         local_path = copy_to_local(config.actor_rollout_ref.model.path)
 
@@ -141,6 +140,7 @@ class TaskRunner:
         # - for code related prompt, we send to a sandbox if there are test cases
         # - finally, we combine all the rewards together
         # - The reward type depends on the tag of the data
+        
         if config.reward_model.enable:
             if config.reward_model.strategy in ["fsdp", "fsdp2"]:
                 from verl.workers.fsdp_workers import RewardModelWorker

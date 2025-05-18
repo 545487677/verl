@@ -33,7 +33,7 @@ def get_custom_reward_fn(config):
 
     if not os.path.exists(file_path):
         raise FileNotFoundError(f"Reward function file '{file_path}' not found.")
-
+    
     spec = importlib.util.spec_from_file_location("custom_module", file_path)
     module = importlib.util.module_from_spec(spec)
     try:
@@ -59,9 +59,10 @@ def get_custom_reward_fn(config):
 
 def load_reward_manager(config, tokenizer, num_examine, **reward_kwargs):
     reward_manager_name = config.reward_model.get("reward_manager", "naive")
+    
     if reward_manager_name == "naive":
         from verl.workers.reward_manager import NaiveRewardManager
-
+        
         reward_manager_cls = NaiveRewardManager
     elif reward_manager_name == "prime":
         from verl.workers.reward_manager import PrimeRewardManager
@@ -110,8 +111,10 @@ def compute_reward(data: DataProto, reward_fn):
         Tuple of reward tensor and extra info dictionary.
     """
     try:
+        
         reward_result = reward_fn(data, return_dict=True)
         reward_tensor = reward_result["reward_tensor"]
+        
         reward_extra_infos_dict = reward_result["reward_extra_info"]
     except Exception as e:
         print(f"Error in reward_fn: {e}")

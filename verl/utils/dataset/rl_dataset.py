@@ -75,7 +75,7 @@ class RLHFDataset(Dataset):
         self.tokenizer = tokenizer
         self.processor = processor
         self.config = config
-
+        
         self.cache_dir = os.path.expanduser(config.get("cache_dir", "~/.cache/verl/rlhf"))
         self.prompt_key = config.get("prompt_key", "prompt")
         self.image_key = config.get("image_key", "images")
@@ -137,7 +137,7 @@ class RLHFDataset(Dataset):
 
     def _build_messages(self, example: dict):
         messages: list = example.pop(self.prompt_key)
-
+        
         if self.image_key in example or self.video_key in example:
             for message in messages:
                 content = message["content"]
@@ -161,7 +161,7 @@ class RLHFDataset(Dataset):
         row_dict: dict = self.dataframe[item]
         messages = self._build_messages(row_dict)
         model_inputs = {}
-
+        
         if self.processor is not None:
             from verl.utils.dataset.vision_utils import process_image, process_video
 

@@ -17,10 +17,11 @@ import re
 
 def extract_solution(solution_str, method="strict"):
     assert method in ["strict", "flexible"]
-
+    
     if method == "strict":
         # this also tests the formatting of the model
         solution = re.search("#### (\\-?[0-9\\.\\,]+)", solution_str)
+        breakpoint()
         if solution is None:
             final_answer = None
         else:
@@ -38,6 +39,7 @@ def extract_solution(solution_str, method="strict"):
             for final_answer in reversed(answer):
                 if final_answer not in invalid_str:
                     break
+    breakpoint()
     return final_answer
 
 
@@ -53,7 +55,9 @@ def compute_score(solution_str, ground_truth, method="strict", format_score=0.0,
         format_score: the score for the format
         score: the score for the correct answer
     """
+    breakpoint()
     answer = extract_solution(solution_str=solution_str, method=method)
+    breakpoint()
     if answer is None:
         return 0
     else:

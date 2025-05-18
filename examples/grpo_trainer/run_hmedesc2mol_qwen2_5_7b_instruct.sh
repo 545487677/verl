@@ -7,7 +7,7 @@ sleep 1s
 export HYDRA_FULL_ERROR=1
 pip install --force-reinstall psutil==5.9.8
 pip install -U "ray[data,train,tune,serve]"
-conda install -c conda-forge rdkit -y
+# conda install -c conda-forge rdkit -y
 # If you are using vllm<=0.6.3, you might need to set the following environment variable to avoid bugs:
 # export VLLM_ATTENTION_BACKEND=XFORMERS
 
@@ -50,7 +50,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.nnodes=1 \
     trainer.save_freq=100 \
     trainer.test_freq=5 \
-    trainer.total_epochs=15  2>&1 | tee verl_qwen25_7b_demo.log
+    trainer.total_epochs=15  2>&1 | tee verl_hme_qwen25_7b_demo.log
 
     ## 64g * 2
 

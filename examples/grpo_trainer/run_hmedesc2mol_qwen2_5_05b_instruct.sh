@@ -8,7 +8,7 @@ sleep 1s
 export HYDRA_FULL_ERROR=1
 pip install --force-reinstall psutil==5.9.8
 pip install -U "ray[data,train,tune]"
-conda install -c conda-forge rdkit -y
+# conda install -c conda-forge rdkit -y
 
 export RAY_DEBUG=legacy
 
@@ -49,7 +49,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.ref.fsdp_config.param_offload=True \
     algorithm.use_kl_in_reward=False \
     trainer.critic_warmup=0 \
-    trainer.val_before_train=True \
+    trainer.val_before_train=False \
     trainer.logger=['console','wandb'] \
     trainer.project_name='verl_grpo_hme_desc2mol_format_acc' \
     trainer.experiment_name='qwen2_5_05b_function_rm' \

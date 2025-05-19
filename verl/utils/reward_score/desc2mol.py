@@ -90,41 +90,57 @@ def smiles_levenshtein(pred_smi: str, gt_smi: str, normalize_len: int = 100) -> 
         return 0.0
 
 
-def compute_score(solution_str: str, ground_truth: str) -> float:
+# def compute_score(solution_str: str, ground_truth: str) -> float:
     
-    pred_smi = extract_solution(solution_str)
-    if pred_smi is None:
-        return 0.0  
+#     pred_smi = extract_solution(solution_str)
+#     if pred_smi is None:
+#         return 0.0  
 
-    if not is_valid_smiles(pred_smi):
-        return 0.0  
+#     if not is_valid_smiles(pred_smi):
+#         return 0.0  
     
+#     exact_text = exact_string_match(pred_smi, ground_truth)
+#     exact_struct = exact_structure_match(pred_smi, ground_truth)
+#     prop_sim = property_similarity(pred_smi, ground_truth)
+#     maccs_sim, rdk_sim, morgan_sim = fingerprint_similarity_scores(pred_smi, ground_truth)
+#     lev_sim = smiles_levenshtein(pred_smi, ground_truth)
+
+#     weights = {
+#         "exact_text_match": 0.85, # 
+#         "exact_struct_match": 0.1,
+#         # "morgan_similarity": 0.15,
+#         # "property_similarity": 0.1,
+#         # "smiles_levenshtein": 0.05,
+#         # "rdk_similarity": 0.05,
+#         # "maccs_similarity": 0.05,
+#         "format_text": 0.05,
+#     }
+
+#     score = (
+#         weights["exact_text_match"] * exact_text +
+#         weights["exact_struct_match"] * exact_struct +
+#         # weights["property_similarity"] * prop_sim +
+#         # weights["morgan_similarity"] * morgan_sim +
+#         # weights["rdk_similarity"] * rdk_sim +
+#         # weights["maccs_similarity"] * maccs_sim +
+#         # weights["smiles_levenshtein"] * lev_sim + 
+#         weights["format_text"] * 1
+#     )
+    
+#     return float(score)
+
+def compute_score(solution_str: str, ground_truth: str) -> float:
+    pred_smi = extract_solution(solution_str)
+    if pred_smi is None or not is_valid_smiles(pred_smi):
+        return 0.0
+
     exact_text = exact_string_match(pred_smi, ground_truth)
     exact_struct = exact_structure_match(pred_smi, ground_truth)
-    prop_sim = property_similarity(pred_smi, ground_truth)
-    maccs_sim, rdk_sim, morgan_sim = fingerprint_similarity_scores(pred_smi, ground_truth)
-    lev_sim = smiles_levenshtein(pred_smi, ground_truth)
+    _, _, morgan_sim = fingerprint_similarity_scores(pred_smi, ground_truth)
 
-    weights = {
-        "exact_text_match": 0.85, # 
-        "exact_struct_match": 0.1,
-        # "morgan_similarity": 0.15,
-        # "property_similarity": 0.1,
-        # "smiles_levenshtein": 0.05,
-        # "rdk_similarity": 0.05,
-        # "maccs_similarity": 0.05,
-        "format_text": 0.05,
-    }
-
-    score = (
-        weights["exact_text_match"] * exact_text +
-        weights["exact_struct_match"] * exact_struct +
-        # weights["property_similarity"] * prop_sim +
-        # weights["morgan_similarity"] * morgan_sim +
-        # weights["rdk_similarity"] * rdk_sim +
-        # weights["maccs_similarity"] * maccs_sim +
-        # weights["smiles_levenshtein"] * lev_sim + 
-        weights["format_text"] * 1
-    )
-    
-    return float(score)
+    if exact_text == 1.0:
+        return 1.0
+    elif exact_struct == 1.0:
+        return 0.9
+    else:
+        return 0.3 + 0.6 * morgan_sim  # 最低 0.3（鼓励），最高 0.9

@@ -25,6 +25,7 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.model.path=/vepfs/fs_projects/FunMG/LLM/model_weight/qwen/Qwen2.5-7B-Instruct \
     actor_rollout_ref.actor.optim.lr=1e-6 \
     actor_rollout_ref.model.use_remove_padding=True \
+    actor_rollout_ref.actor.use_dynamic_bsz=True \
     actor_rollout_ref.actor.ppo_mini_batch_size=64 \
     actor_rollout_ref.actor.ppo_micro_batch_size_per_gpu=32 \
     actor_rollout_ref.actor.use_kl_loss=True \
@@ -50,7 +51,7 @@ python3 -m verl.trainer.main_ppo \
     trainer.nnodes=1 \
     trainer.save_freq=100 \
     trainer.test_freq=5 \
-    trainer.total_epochs=15  2>&1 | tee verl_hme_qwen25_7b_demo.log
+    trainer.total_epochs=6  2>&1 | tee verl_hme_qwen25_7b_demo.log
 
     ## 64g * 2
 

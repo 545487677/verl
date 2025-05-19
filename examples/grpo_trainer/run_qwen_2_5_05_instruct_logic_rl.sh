@@ -4,23 +4,24 @@ set -x
 export VLLM_ATTENTION_BACKEND=XFORMERS
 ray stop                         
 sleep 1s 
-# export RAY_DEBUG_POST_MORTEM=1
+export RAY_DEBUG_POST_MORTEM=1
 export HYDRA_FULL_ERROR=1
 pip install --force-reinstall psutil==5.9.8
-pip install -U "ray[data,train,tune]"
+pip install -U "ray[data,train,tune,default]"
+pip install debugpy==1.8.0
 # conda install -c conda-forge rdkit -y
 
-export RAY_DEBUG=legacy
 
 # start head node
-ray start --head --node-ip-address 0.0.0.0 --num-gpus 2 --ray-debugger-external --port 6380
+# export RAY_DEBUG=legacy
+# ray start --head --node-ip-address 0.0.0.0 --num-gpus 2 --ray-debugger-external --port 6380
 # start worker node
-ray start --address='0.0.0.0:6380' --ray-debugger-external
+# ray start --address='0.0.0.0:6380' --ray-debugger-external
 
 python3 -m verl.trainer.main_ppo \
     algorithm.adv_estimator=grpo \
-    data.train_files=/vepfs/fs_projects/FunMG/LLM/dataset/mol_grpo/desc2mol_grpo_parquet/train.parquet \
-    data.val_files=/vepfs/fs_projects/FunMG/LLM/dataset/mol_grpo/desc2mol_grpo_parquet/test.parquet \
+    data.train_files=/vepfs/fs_users/guojianz/dp_project/LLM/LLM_Finetune/Finetune_learning/Logic-RL/data/kk/instruct/3ppl/train.parquet \
+    data.val_files=/vepfs/fs_users/guojianz/dp_project/LLM/LLM_Finetune/Finetune_learning/Logic-RL/data/kk/instruct/3ppl/test.parquet \
     data.train_batch_size=4 \
     data.val_batch_size=4 \
     data.max_prompt_length=512 \
@@ -49,17 +50,17 @@ python3 -m verl.trainer.main_ppo \
     actor_rollout_ref.ref.fsdp_config.param_offload=True \
     algorithm.use_kl_in_reward=False \
     trainer.critic_warmup=0 \
-    trainer.val_before_train=False \
+    trainer.val_before_train=True \
     trainer.logger=['console','wandb'] \
-    trainer.project_name='verl_grpo_hme_desc2mol_format_acc' \
-    trainer.experiment_name='qwen2_5_05b_function_rm' \
+    trainer.project_name='GRPO_logic_KK' \
+    trainer.experiment_name='Qwen-7B' \
     trainer.n_gpus_per_node=2 \
     trainer.nnodes=1 \
     trainer.save_freq=20 \
     trainer.test_freq=5 \
-    trainer.total_epochs=15  2>&1 | tee verl_demo.log
+    trainer.total_epochs=1  2>&1 | tee verl_demo.log
 
-cd /vepfs/fs_ckps/guojianz/llm/verl_exp/verl_grpo_hme_desc2mol_format_acc/qwen2_5_05b_function_rm
+cd /vepfs/fs_ckps/guojianz/llm/verl_exp/GRPO_logic_KK/Qwen-7B
 max_step=$(ls -d global_step_* | sed 's/global_step_//' | sort -n | tail -1)
 max_dir="global_step_$max_step"
 

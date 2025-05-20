@@ -143,4 +143,4 @@ def compute_score(solution_str: str, ground_truth: str) -> float:
     elif exact_struct == 1.0:
         return 0.9
     else:
-        return 0.3 + 0.6 * morgan_sim  # 最低 0.3（鼓励），最高 0.9
+        return 0.3 + 0.6 * morgan_sim  

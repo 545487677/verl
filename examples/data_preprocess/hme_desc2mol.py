@@ -24,8 +24,7 @@ RDLogger.DisableLog('rdApp.*')
 
 
 tail_instruction = (
-    "Let's think step by step and return the final answer in <answer> </answer> tags, "
-    "for example <answer> CCCCC[C@@H]1O[C@@H]1/C=C/C(O)C/C=C\\C/C=C\\CCCC(=O)[O-] </answer>."
+    "Let's think step by step and return the final answer in <answer> </answer> tags, for example <answer> CCCCC[C@@H]1O[C@@H]1/C=C/C(O)C/C=C\\C/C=C\\CCCC(=O)[O-] </answer>. Do not use <|...|> or other formats. The answer **must** be returned in the format: <answer> CCCCC[C@@H]1O[C@@H]1/C=C/C(O)C/C=C\\C/C=C\\CCCC(=O)[O-] </answer>."
 )
 
 one_shot_description = (

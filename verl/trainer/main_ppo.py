@@ -19,7 +19,6 @@ import os
 
 import hydra
 import ray
-
 from verl.trainer.ppo.ray_trainer import RayPPOTrainer
 from verl.trainer.ppo.reward import load_reward_manager
 
@@ -82,9 +81,8 @@ class TaskRunner:
         from pprint import pprint
 
         from omegaconf import OmegaConf
-
         from verl.utils.fs import copy_to_local
-        
+        # breakpoint()
         pprint(OmegaConf.to_container(config, resolve=True))  # resolve=True will eval symbol values
         OmegaConf.resolve(config)
         
@@ -102,15 +100,19 @@ class TaskRunner:
         if config.actor_rollout_ref.actor.strategy in ["fsdp", "fsdp2"]:
             assert config.critic.strategy in ["fsdp", "fsdp2"]
             from verl.single_controller.ray import RayWorkerGroup
-            from verl.workers.fsdp_workers import ActorRolloutRefWorker, AsyncActorRolloutRefWorker, CriticWorker
+            from verl.workers.fsdp_workers import (ActorRolloutRefWorker,
+                                                   AsyncActorRolloutRefWorker,
+                                                   CriticWorker)
 
             actor_rollout_cls = AsyncActorRolloutRefWorker if config.actor_rollout_ref.rollout.mode == "async" else ActorRolloutRefWorker
             ray_worker_group_cls = RayWorkerGroup
 
         elif config.actor_rollout_ref.actor.strategy == "megatron":
             assert config.actor_rollout_ref.actor.strategy == config.critic.strategy
-            from verl.single_controller.ray.megatron import NVMegatronRayWorkerGroup
-            from verl.workers.megatron_workers import ActorRolloutRefWorker, CriticWorker
+            from verl.single_controller.ray.megatron import \
+                NVMegatronRayWorkerGroup
+            from verl.workers.megatron_workers import (ActorRolloutRefWorker,
+                                                       CriticWorker)
 
             actor_rollout_cls = ActorRolloutRefWorker
             ray_worker_group_cls = NVMegatronRayWorkerGroup
@@ -195,7 +197,6 @@ def create_rl_dataset(data_paths, data_config, tokenizer, processor):
         dataset (Dataset): The dataset.
     """
     from torch.utils.data import Dataset
-
     from verl.utils.dataset.rl_dataset import RLHFDataset
 
     if "custom_cls" in data_config and data_config.custom_cls.get("path", None) is not None:

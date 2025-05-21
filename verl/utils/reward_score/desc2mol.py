@@ -1,28 +1,18 @@
-# Copyright 2025 Guojiang Zhao
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
-# Unless required by applicable law or agreed to in writing, software
-# distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
-# limitations under the License.
 
 import re
+
 import numpy as np
-from rdkit import Chem, DataStructs
-from rdkit.Chem import AllChem, MACCSkeys, Descriptors
 from Levenshtein import distance as lev
-from rdkit import rdBase
-from rdkit import RDLogger
-from rdkit import Chem
+from rdkit import Chem, DataStructs, RDLogger, rdBase
+from rdkit.Chem import AllChem, Descriptors, MACCSkeys
+
 rdBase.DisableLog('rdApp.error')
 RDLogger.DisableLog('rdApp.warning')
 RDLogger.DisableLog('rdApp.*')
+from collections import Counter
+
+from EFGs import mol2frag
+from rdkit import Chem
 
 
 def extract_solution(solution_str: str) -> str:
@@ -128,6 +118,59 @@ def smiles_levenshtein(pred_smi: str, gt_smi: str, normalize_len: int = 100) -> 
 #     )
     
 #     return float(score)
+def compute_fragment_overlap(pred_smi: str, gt_smi: str) -> float:
+    try:
+        mol_pred = Chem.MolFromSmiles(pred_smi)
+        mol_gt = Chem.MolFromSmiles(gt_smi)
+        if mol_pred is None or mol_gt is None:
+            return 0.0
+
+        pred_nonCHs, pred_CHs = mol2frag(mol_pred)
+        gt_nonCHs, gt_CHs = mol2frag(mol_gt)
+
+        pred_frags = set(pred_nonCHs + pred_CHs)
+        gt_frags = set(gt_nonCHs + gt_CHs)
+
+        if not pred_frags or not gt_frags:
+            return 0.0
+
+        intersect = pred_frags & gt_frags
+        union = pred_frags | gt_frags
+        return len(intersect) / len(union)
+    except Exception as e:
+        print(f"[fragment reward error] {e}")
+        return 0.0
+        
+def fragment_recall(pred_smi: str, gt_smi: str) -> float:
+    try:
+        mol_pred = Chem.MolFromSmiles(pred_smi)
+        mol_gt = Chem.MolFromSmiles(gt_smi)
+        pred_nonCHs, pred_CHs = mol2frag(mol_pred)
+        gt_nonCHs, gt_CHs = mol2frag(mol_gt)
+        pred_frags = set(pred_nonCHs + pred_CHs)
+        gt_frags = set(gt_nonCHs + gt_CHs)
+        if not gt_frags:
+            return 0.0
+        return len(pred_frags & gt_frags) / len(gt_frags)
+    except:
+        return 0.0
+
+
+def functional_group_count_diff(pred_smi: str, gt_smi: str) -> float:
+    try:
+        mol1 = Chem.MolFromSmiles(pred_smi)
+        mol2 = Chem.MolFromSmiles(gt_smi)
+        pred_nonCHs, _ = mol2frag(mol1)
+        gt_nonCHs, _ = mol2frag(mol2)
+        pred_count = Counter(pred_nonCHs)
+        gt_count = Counter(gt_nonCHs)
+        all_keys = set(pred_count) | set(gt_count)
+        diff_sum = sum(abs(pred_count[k] - gt_count[k]) for k in all_keys)
+        total = sum(gt_count.values()) + 1e-5
+        return float(np.exp(-diff_sum / total))  # 差异越小，reward 越高
+    except:
+        return 0.0
+
 
 def compute_score(solution_str: str, ground_truth: str) -> float:
     pred_smi = extract_solution(solution_str)
@@ -136,11 +179,18 @@ def compute_score(solution_str: str, ground_truth: str) -> float:
 
     exact_text = exact_string_match(pred_smi, ground_truth)
     exact_struct = exact_structure_match(pred_smi, ground_truth)
-    _, _, morgan_sim = fingerprint_similarity_scores(pred_smi, ground_truth)
+    maccs_sim, rdk_sim, morgan_sim = fingerprint_similarity_scores(pred_smi, ground_truth)
+    fp_score = 0.5 * morgan_sim + 0.25 * maccs_sim + 0.25 * rdk_sim
+
+    frag_jaccard = compute_fragment_overlap(pred_smi, ground_truth)
+    frag_recall_score = fragment_recall(pred_smi, ground_truth)
+    frag_score = 0.5 * frag_jaccard + 0.5 * frag_recall_score
+
+    group_score = functional_group_count_diff(pred_smi, ground_truth)
 
     if exact_text == 1.0:
         return 1.0
     elif exact_struct == 1.0:
         return 0.9
     else:
-        return 0.3 + 0.6 * morgan_sim  
+        return 0.1 + 0.3 * fp_score + 0.3 * frag_score + 0.3 * group_score

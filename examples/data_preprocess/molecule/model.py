@@ -124,7 +124,7 @@ class APIModel:
         attempts = 0
         while attempts < max_retries:
             client, model = next(self.model_pool)  # 从池中获取下一个模型
-            # print(f"当前调用的模型: {model}")  # 打印出正在使用的模型名称
+            print(f"当前调用的模型: {model}")  # 打印出正在使用的模型名称
             async with self.semaphore:
                 try:
                     start_time = time.time()
@@ -171,19 +171,8 @@ class APIModel:
 # 使用示例
 async def main():
     api_model = APIModel()
-    prompt = "Please generate the molecular structure (SMILES) based on the following description.\n\n" \
-          "### Example:\n" \
-          "Description: The molecule is an epoxy(hydroxy)icosatrienoate that is the conjugate base of " \
-          "11 hydroxy-(14R,15S)-epoxy-(5Z,8Z,12E)-icosatrienoic acid, obtained by deprotonation of the carboxy group; " \
-          "major species at pH 7.3. It is a conjugate base of an 11 hydroxy-(14R,15S)-epoxy-(5Z,8Z,12E)-icosatrienoic acid.\n" \
-          "Answer: <answer> CCCCC[C@@H]1O[C@@H]1/C=C/C(O)C/C=C\\C/C=C\\CCCC(=O)[O-] </answer>\n\n" \
-          "### Now try this:\n" \
-          "Description: The molecule is a steroid ester that is methyl (17E)-pregna-4,17-dien-21-oate substituted by " \
-          "oxo groups at positions 3 and 11. It is a 3-oxo-Delta(4) steroid, an 11-oxo steroid, a steroid ester and a methyl ester. " \
-          "It derives from a hydride of a pregnane.\n" \
-          "Let's think step by step and return the final answer in <answer> </answer> tags, " \
-          "for example <answer> CCCCC[C@@H]1O[C@@H]1/C=C/C(O)C/C=C\\C/C=C\\CCCC(=O)[O-] </answer>."
-    responses = await api_model.batch_chat([prompt] * 5)  # 示例批量请求
+    prompt = "你好."
+    responses = await api_model.batch_chat([prompt] * 100)  # 示例批量请求
     for i, response in enumerate(responses):
         print(f"Response {i+1}: {response}")
 

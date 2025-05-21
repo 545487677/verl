@@ -541,4 +541,6 @@ def create_sft_dataset(data_paths, data_config, tokenizer):
 
 
 if __name__ == "__main__":
+    import wandb
+    wandb.login(key="8c79996184bc89db9a7d0ca63f3f1e9564a34b44")
     main()

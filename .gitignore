@@ -128,3 +128,5 @@ outputs
 *log
 *whl
 *csv
+.env
+*png
